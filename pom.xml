@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>99c45ddc-49b7-4df9-bf10-6411a5db0ffa</groupId>
+    <artifactId>request-connector</artifactId>
+    <version>2.0.3</version>
+
+    <packaging>mule-extension</packaging>
+
+    <name>request-connector</name>
+    <description>A Mule extension done with pure Mule DSL that depends in the runtime operations (set-payload, set-variable, etc.)</description>
+
+
+    <properties>
+        <ap.orgId>${project.groupId}</ap.orgId>
+        <mule.version>4.4.0</mule.version>
+		<mule.module.spring.config.ee>4.4.0-20220919</mule.module.spring.config.ee>
+        <mule.extensions.maven.plugin.version>1.5.0-20220622</mule.extensions.maven.plugin.version>
+        <munit.extensions.maven.plugin.version>1.1.3</munit.extensions.maven.plugin.version>
+        <exchange.mule.maven.plugin.version>0.0.17</exchange.mule.maven.plugin.version>
+        <http.connector.version>1.7.1</http.connector.version>
+
+        <munit.version>2.1.0</munit.version>
+        <munit.input.directory>src/test/munit</munit.input.directory>
+        <munit.output.directory>${basedir}/target/test-mule/munit</munit.output.directory>
+    </properties>
+
+	<build>
+        <plugins>
+            <plugin>
+                <groupId>org.mule.runtime.plugins</groupId>
+                <artifactId>mule-extensions-maven-plugin</artifactId>
+                <version>${mule.extensions.maven.plugin.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>com.mulesoft.munit</groupId>
+                <artifactId>munit-extensions-maven-plugin</artifactId>
+                <version>${munit.extensions.maven.plugin.version}</version>
+				<executions>
+					<execution>
+						<id>munit-extension-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<dynamicPorts>
+						<dynamicPort>a.dynamic.port</dynamicPort>
+					</dynamicPorts>
+					<environmentVariables>
+						<MY_ENV>envVar</MY_ENV>
+					</environmentVariables>
+				</configuration>
+            </plugin>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>exchange-mule-maven-plugin</artifactId>
+				<version>${exchange.mule.maven.plugin.version}</version>
+				<executions>
+					<execution>
+						<id>validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>exchange-pre-deploy</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>exchange-deploy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!--Needed to discover the 'xml-based' XmlExtensionLoader for smart connectors-->
+        <dependency>
+            <groupId>org.mule.runtime</groupId>
+            <artifactId>mule-module-extensions-xml-support</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
+		 
+		<!-- DataWeave -->
+		<dependency>
+		   <groupId>com.mulesoft.mule.runtime.modules</groupId>
+		   <artifactId>mule-module-spring-config-ee</artifactId>
+		   <version>${mule.module.spring.config.ee}</version>
+		   <scope>provided</scope>
+		</dependency>
+		
+        <dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>${http.connector.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+    </dependencies>
+
+    <repositories>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+		</repository>
+	</repositories>
+
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${ap.orgId}/maven</url>
+			<layout>default</layout>
+		</repository>
+	</distributionManagement>
+</project>
