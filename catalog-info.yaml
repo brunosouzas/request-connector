@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: request-connector
+  title: Request Connector
+  tags:
+    - plugin
+    - mulesoft
+  description: The Request Connector is a mulesoft plugin.
+  annotations:
+    github.com/project-slug: 'brunosouzas/request-connector'
+    backstage.io/techdocs-ref: dir:./techDocs
+spec:
+  type: plugin
+  lifecycle: development
+  owner: administrators

@@ -1,0 +1,5 @@
+site_name: 'Request Connector'
+nav:
+  - Home: index.md
+plugins:
+  - techdocs-core

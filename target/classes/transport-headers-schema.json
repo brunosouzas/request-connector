@@ -1,0 +1,34 @@
+{
+    "type": "object",
+    "title": "Transport Headers",
+    "required": [
+        "HEADER:KEY"
+    ],
+    "properties": {
+        "HEADER:KEY": {
+            "type": "object",
+            "required": [
+                "clientId",
+                "clientSecret"
+            ],
+            "properties": {
+                "client_id": {
+                    "type": "string",
+                    "title": "client_id",
+                    "default": "",
+                    "examples": [
+                        "55c4970c0d634fe193bf5fdcc403d6f0"
+                    ]
+                },
+                "client_secret": {
+                    "type": "string",
+                    "title": "client_secret",
+                    "default": "",
+                    "examples": [
+                        "307a79e5Ac4648d2b4637D8C6E13eC78"
+                    ]
+                }
+            }
+        }
+    }
+}

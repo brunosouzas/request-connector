@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "title": "Query Parameters",
+    "required": [
+        "PARAMETERS:KEY"
+    ],
+    "properties": {
+        "PARAMETERS:KEY": {
+            "type": "object",
+            "properties": {
+                "srcColumn": {
+                    "type": "string",
+                    "title": "srcColumn",
+                    "default": "",
+                    "examples": [
+                        "TRANSACTION_CODE"
+                    ]
+                },
+                "srcValue": {
+                    "type": "string",
+                    "title": "srcValue",
+                    "default": "",
+                    "examples": [
+                        "307a79e5Ac"
+                    ]
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="request-connector"
+	prefix="request-connector"
+	doc:description="This module relies in runtime provided components"
+	category="SELECT"
+	xmlns="http://www.mulesoft.org/schema/mule/module"
+	xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:tns="http://www.mulesoft.org/schema/mule/request-connector"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/module http://www.mulesoft.org/schema/mule/module/current/mule-module.xsd
+						http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+						http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+						http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+						http://www.mulesoft.org/schema/mule/request-connector http://www.mulesoft.org/schema/mule/request-connector/current/request-connector.xsd">
+
+
+ 
+	<http:request-config name="httpRequestConnectorConfig" doc:name="Http Request Config" doc:id="396a5d09-228d-4dab-824f-9e4fee47faac" />
+ 
+
+	
+	<operation name="http-request" doc:description="Generic HTTP Request">
+        <parameters>
+        	<parameter name="method" type="string" defaultValue="GET" order="1"/>
+            <parameter name="url" type="string" use="REQUIRED" order="2"/>
+            <parameter name="bsName" displayName="API Name (Request)" type="string" use="REQUIRED" order="3"/>
+            
+			<parameter name="headers" 
+				type="TransportHeadersType"
+				displayName="Headers" 
+				use="OPTIONAL"
+				defaultValue="#[{}]"
+				order="3">
+			</parameter>
+
+			<parameter name="queryParameters" 
+				type="QueryParametersType"
+				displayName="Query Parameters" 
+				use="OPTIONAL"
+				defaultValue="#[{}]"
+				order="4">
+			</parameter>
+			            
+			<parameter name="body" 
+				type="QueryParametersType"
+				displayName="Body" 
+				use="OPTIONAL"
+				defaultValue="#[payload]"
+				order="5">
+			</parameter>
+			
+            <parameter name="responseTimeout" 
+            	type="string" 
+            	defaultValue="30000"
+            	tab="Configurations"
+            	order="1">
+            </parameter>
+			
+			<parameter name="correlationId" 
+				type="string"
+				use="OPTIONAL" 
+				displayName="correlationId"
+				defaultValue="#[correlationId]" 
+				tab="Configurations"
+				order="2">
+			</parameter>
+			
+			<parameter 
+				name="maxRetries" 
+				type="string" 
+				defaultValue="3"
+				displayName="Max Retries"
+				tab="mule:until-successful"
+				order="1">
+			</parameter>
+			
+			<parameter 
+				name="millisBetweenRetries" 
+				type="string" 
+				defaultValue="10000"
+				displayName="Milliseconds Between Retries"
+				tab="mule:until-successful"
+				order="2">
+			</parameter>
+			
+			<parameter 
+				name="showLogger" 
+				type="boolean" 
+				use="OPTIONAL" 
+				defaultValue="true"
+				tab="logger"
+				order="1">
+			</parameter>
+			
+			<parameter 
+				name="loggerReqPayload" 
+				displayName="Logger Request Payload?"
+				type="boolean" 
+				use="OPTIONAL" 
+				defaultValue="true"
+				tab="logger"
+				order="2">
+			</parameter>
+			
+			<parameter 
+				name="logRespPayload" 
+				displayName="Logger Response Payload?"
+				type="boolean" 
+				use="OPTIONAL" 
+				defaultValue="true"
+				tab="logger"
+				order="3">
+			</parameter>
+			
+			<parameter 
+				name="info" 
+				displayName="Additional Information from Request"
+				type="string" 
+				use="OPTIONAL" 
+				tab="logger"
+				order="4">
+			</parameter>
+        </parameters>
+        
+        <body>
+			<mule:choice doc:name="CHECK IF vRequest.logger.show is true" doc:id="2cb09db8-7c0e-43fb-bd04-5b7adf1761ae" >
+				<mule:when expression='#[vars.showLogger as Boolean]'>
+					<ee:transform doc:name="logMessage" doc:id="dd1d77c8-41e3-4e3c-beb0-8c022ce4ed42">
+						<ee:variables>
+							<ee:set-variable variableName="vLogMessage"><![CDATA[%dw 2.0
+var bsName = vars.bsName as String
+var logReqPayload = vars.showLogger as Boolean
+output application/json
+---
+{
+	"message": "HTTP Request to $(bsName)",
+	"content": {
+		method: vars.method,
+		url: vars.url,
+		headers: vars.headers,
+		queryParameters: vars.queryParameters,
+		(paylaod: vars.body) if(logReqPayload),
+		(info: vars.info) if(!isEmpty(vars.info))
+	}
+}]]>
+							</ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					
+					<mule:logger doc:name="LOG DEBUG http request" doc:id="477cae3e-ec7f-406e-936b-f0da3f389087" message="#[vars.vLogMessage]" level="INFO" category="com.infomentum.http-request-generic"/>
+				</mule:when>
+			</mule:choice>
+	
+			
+			
+			<mule:until-successful doc:name="Until Successful" doc:id="2e5db9ab-556c-45d5-a1a0-8c5f96df675d" maxRetries="#[vars.maxRetries]" millisBetweenRetries="#[vars.millisBetweenRetries]">
+				<mule:try doc:name="Try" doc:id="552d4259-bfb0-4d61-9b82-eb25a5fcce27" >
+					<http:request doc:name="HTTP Generic Request" 
+							doc:id="6bdc3563-a78b-4ed4-be33-34df28cfe659" 
+							config-ref="httpRequestConnectorConfig" 
+							method="#[vars.method]" 
+							url="#[vars.url]" 
+							sendCorrelationId="ALWAYS" 
+							correlationId="#[correlationId]" 
+							responseTimeout="#[vars.responseTimeout]">
+						<mule:reconnect />
+						<http:body><![CDATA[#[vars.body]]]></http:body>
+						<http:headers><![CDATA[#[vars.headers]]]></http:headers>
+						<http:query-params><![CDATA[#[vars.queryParameters]]]></http:query-params>
+					</http:request>
+
+					<mule:error-handler >
+						<mule:on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8d358dd2-7497-4bac-8478-7520c03d7a90" type="HTTP:CONNECTIVITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT">
+							<ee:transform doc:name="errorDetails" doc:id="5af45b12-b62f-4b03-8c1b-447fdf1ce026">
+								<ee:variables>
+									<ee:set-variable variableName="errorDetails" ><![CDATA[
+										%dw 2.0
+										var bsName = vars.bsName as String
+										output application/json
+										---
+										{
+											message: "HTTP RESTful API Error from $(bsName)",
+											content: {
+												attributes: error.suppressedErrors[0].muleMessage.attributes default {},
+												payload: error.errorMessage.payload.^raw as String default error.description
+											}
+										}
+									]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+
+							<mule:logger level="ERROR" doc:name="Logger" doc:id="005a9741-e433-4170-a5a2-a05c03322ca6" message="#[vars.errorDetails]"/>
+						</mule:on-error-propagate>
+						
+						<mule:on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2fe93eaa-03c7-439a-b6d0-ac6d18ca8d9f">
+							<ee:transform doc:name="set error" doc:id="6814a249-1dfb-47bd-b300-21bae6f09394" >
+								<ee:variables >
+									<ee:set-variable variableName="errorDetails" ><![CDATA[
+										%dw 2.0
+										var bsName = vars.bsName as String
+										output application/json
+										---
+										{
+											message: "HTTP RESTful API Error from $(bsName)",
+											content: {
+												attributes: error.suppressedErrors[0].muleMessage.attributes default {},
+												payload: error.errorMessage.payload.^raw as String default error.description
+											}
+										}
+									]]></ee:set-variable>
+									<ee:set-variable variableName="error" ><![CDATA[%dw 2.0
+									output application/java
+									---
+									error]]></ee:set-variable>	
+								</ee:variables>
+							</ee:transform>
+
+							<mule:logger level="ERROR" doc:name="Logger" doc:id="c1556849-18c7-4db4-b0f0-2c5724ef8efa" message="#[vars.errorDetails]" category="" />
+						</mule:on-error-continue>
+					</mule:error-handler>
+				</mule:try>
+			</mule:until-successful>
+
+
+			<mule:choice doc:name="Choice" doc:id="1dfb623d-3d7f-4259-9061-0665e0cf8680" >
+				<mule:when expression='#[vars.error.errorType.identifier == "BAD_REQUEST"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:BAD_REQUEST" doc:id="2ccbbdd8-31b6-409f-83f3-9d4802623b13" type="REQUEST-CONNECTOR:BAD_REQUEST" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "FORBIDDEN"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:FORBIDDEN" doc:id="977e2525-0817-4730-90a1-50e7560b1afc" type="REQUEST-CONNECTOR:FORBIDDEN" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[(vars.error.errorType.identifier == "UNAUTHORIZED") or (vars.error.errorType.identifier == "CLIENT_SECURITY") or (vars.error.errorType.identifier == "SECURITY")]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:UNAUTHORIZED" doc:id="64434762-a794-49e7-9438-090e636399da" type="REQUEST-CONNECTOR:UNAUTHORIZED" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "NOT_FOUND"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:NOT_FOUND" doc:id="5f4de927-3b46-4bef-a148-e1e65cb1e84b" type="REQUEST-CONNECTOR:NOT_FOUND" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "METHOD_NOT_ALLOWED"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:METHOD_NOT_ALLOWED" doc:id="7bc2ea5f-1242-4c5e-80c8-172123145cea" type="REQUEST-CONNECTOR:METHOD_NOT_ALLOWED" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "NOT_ACCEPTABLE"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:NOT_ACCEPTABLE" doc:id="7a5f9fc9-16ad-41ec-b587-d1ef72ff3cc6" type="REQUEST-CONNECTOR:NOT_ACCEPTABLE" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "TIMEOUT"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:TIMEOUT" doc:id="6ee0da14-0573-4090-a19f-695614cbea83" type="REQUEST-CONNECTOR:TIMEOUT" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "TOO_MANY_REQUESTS"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:TOO_MANY_REQUESTS" doc:id="5ed0e84f-6e5a-4c8c-afef-0c73366ec99d" type="REQUEST-CONNECTOR:TOO_MANY_REQUESTS" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "UNSUPPORTED_MEDIA_TYPE"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:UNSUPPORTED_MEDIA_TYPE" doc:id="f5c43ebf-6155-4144-8c59-9172c772e923" type="REQUEST-CONNECTOR:UNSUPPORTED_MEDIA_TYPE" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "INTERNAL_SERVER_ERROR"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:INTERNAL_SERVER_ERROR" doc:id="1abe2e9d-05c1-425e-afee-86d1bfb03b68" type="REQUEST-CONNECTOR:INTERNAL_SERVER_ERROR" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "NOT_IMPLEMENTED"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:NOT_IMPLEMENTED" doc:id="99dded89-d8c8-45d3-8ce5-cc036adf2dc5" type="REQUEST-CONNECTOR:NOT_IMPLEMENTED" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "CONNECTIVITY"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:CONNECTIVITY" doc:id="350e52ad-c73f-4bde-95a7-3d59e1b7ba5b" type="REQUEST-CONNECTOR:CONNECTIVITY" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "SERVICE_UNAVAILABLE"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:SERVICE_UNAVAILABLE" doc:id="7703b653-8916-47da-8001-e981cacfc3c4" type="REQUEST-CONNECTOR:SERVICE_UNAVAILABLE" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				
+				<mule:when expression='#[vars.error.errorType.identifier == "UNKNOWN"]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:UNKNOWN" doc:id="4338f74b-6370-4930-9966-49fc888eee25" type="REQUEST-CONNECTOR:UNKNOWN" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+				<mule:when expression='#[vars.error != null]'>
+					<mule:raise-error doc:name="REQUEST-CONNECTOR:INTERNAL_SERVER_ERROR" doc:id="755420f0-1390-421e-aa94-15a848d5655e" type="REQUEST-CONNECTOR:INTERNAL_SERVER_ERROR" description="#[vars.errorDetails.content.payload]" />
+				</mule:when>
+			</mule:choice>
+				
+			<mule:choice doc:name="CHECK IF vRequest.logger.show is true" doc:id="17b1865c-f6d0-4b1f-9d52-2e64b4406c50" >
+				<mule:when expression='#[vars.showLogger as Boolean]'>
+					<ee:transform doc:name="vLogMessage" doc:id="b2b71b96-a0a5-4f7b-94e0-57a258fbd6a6">
+						<ee:variables>
+							<ee:set-variable variableName="vLogMessage"><![CDATA[
+%dw 2.0
+var contentLength = (message.attributes.headers."content-length") as Number default sizeOf(message.payload) default 0
+var maxCharsLimit = "5000" as Number
+var bsName = vars.bsName as String
+var logRespPayload = vars.showLogger as Boolean
+output application/json
+---
+{
+	"message": "HTTP Response from $(bsName)",
+	"content": {
+		attributes: message.attributes,
+		(payload: message.payload) if((contentLength > 0) and (contentLength < maxCharsLimit) and (logRespPayload)),
+		(info: "payload is Empty.") if(contentLength == 0 and logRespPayload),
+		(info: "payload not logged because it's too big.") if(contentLength > maxCharsLimit and logRespPayload)
+	}
+}
+							]]>
+							</ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					
+					<mule:logger doc:name="LOG DEBUG http response" doc:id="86c1f5ef-f77e-4995-90fa-495b6bb3bf15" message="#[vars.vLogMessage]" level="INFO" category="com.infomentum.http-request-generic"/>
+				</mule:when>
+			</mule:choice>
+        </body>
+        <output type="any"/>
+		<errors>
+            <error type="any"/>
+        </errors>
+    </operation>
+ </module>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogs xmlns="http://www.mulesoft.org/schema/mule/types">
+	<catalog name="QueryParametersType" format="application/json">
+		<schema format="application/json+schema" location="./query-parameter-schema.json" />
+	</catalog>
+
+	<catalog name="TransportHeadersType" format="application/json">
+		<schema format="application/json+schema" location="./transport-headers-schema.json" />
+	</catalog>
+</catalogs>
